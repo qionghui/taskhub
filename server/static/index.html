@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskHub · 多机任务工作台</title>
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#ffffff; --surface-2:#f1efe8;
+  --text:#1c1c1a; --text-2:#6b6a65; --text-3:#9b9a94;
+  --line:#e3e1da; --line-2:#d3d1c7;
+  --accent:#534ab7; --accent-soft:#eeedfe;
+  --green:#0f6e56; --green-soft:#e1f5ee;
+  --amber:#854f0b; --amber-soft:#faeeda;
+  --red:#a32d2d; --red-soft:#fcebeb;
+  --blue:#185fa5; --blue-soft:#e6f1fb;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:13px;line-height:1.6}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+.brand{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.topbar .sep{flex:1}
+.tag{font-size:12px;color:var(--text-2);background:var(--surface-2);padding:2px 8px;border-radius:20px}
+
+.btn{border:1px solid var(--line-2);background:var(--surface);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:.12s}
+.btn:hover{border-color:var(--text-3);background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#463da3}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+input[type=text],input[type=password],input[type=number],textarea,select{width:100%;border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;background:var(--surface);outline:none;transition:.12s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{resize:vertical;min-height:90px;line-height:1.7}
+label{display:block;font-size:12px;color:var(--text-2);margin-bottom:4px}
+
+.wrap{padding:20px;max-width:1400px;margin:0 auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center}
+.wrapline{flex-wrap:wrap}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:500;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h2 .count{font-size:12px;color:var(--text-3);font-weight:400}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:400;color:var(--text-2);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--surface-2)}
+
+.badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:20px;white-space:nowrap}
+.b-pending{background:var(--surface-2);color:var(--text-2)}
+.b-claimed{background:var(--blue-soft);color:var(--blue)}
+.b-running{background:var(--blue-soft);color:var(--blue)}
+.b-review{background:var(--amber-soft);color:var(--amber)}
+.b-done{background:var(--green-soft);color:var(--green)}
+.b-failed{background:var(--red-soft);color:var(--red)}
+.b-cancelled{background:var(--surface-2);color:var(--text-3)}
+
+.chip{font-size:12px;background:var(--accent-soft);color:var(--accent);padding:1px 7px;border-radius:6px;white-space:nowrap}
+.chip.ghost{background:var(--surface-2);color:var(--text-2)}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}
+
+.drop{border:1.5px dashed var(--line-2);border-radius:var(--r);padding:14px;text-align:center;color:var(--text-3);cursor:pointer;transition:.15s;background:var(--surface-2)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:4px;width:18px;height:18px;cursor:pointer;font-size:12px;line-height:1;padding:0}
+.thumb .nm{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.logs{background:var(--surface-2);border-radius:8px;padding:10px;max-height:280px;overflow-y:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.logline{padding:1px 0;display:flex;gap:8px}
+.logline .t{color:var(--text-3);flex-shrink:0}
+.logline .w{color:var(--text-2);flex-shrink:0;min-width:80px}
+.logline.warn{color:var(--amber)}
+.logline.error{color:var(--red)}
+
+.kv{display:flex;gap:8px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border:none}
+.kv .k{color:var(--text-3);min-width:72px}
+
+#modal{position:fixed;inset:0;background:rgba(28,28,26,.42);display:none;z-index:100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
+#modal.on{display:flex}
+.modal-box{background:var(--surface);border-radius:14px;width:100%;max-width:760px;padding:20px}
+.modal-box h3{font-size:15px;font-weight:500;margin-bottom:14px}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+
+.hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.empty{color:var(--text-3);text-align:center;padding:24px 0;font-size:13px}
+.tabs{display:flex;gap:4px;margin-bottom:14px}
+.tab{padding:5px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-2);border:none;background:transparent}
+.tab.on{background:var(--surface);color:var(--text);font-weight:500}
+.projchip{padding:5px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:var(--surface);font-size:13px}
+.projchip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.projchip:hover{border-color:var(--accent)}
+/* 项目筛选区：默认只显示一行，溢出部分隐藏 */
+#projFilters:not(.expanded){flex-wrap:nowrap;overflow:hidden}
+#projFilters.expanded{flex-wrap:wrap}
+#projFilters .projchip{flex:0 0 auto;white-space:nowrap}
+/* 展开按钮固定在筛选区右侧，不随 chip 一起被裁切 */
+.projmore{padding:5px 10px;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;
+  color:var(--text-2);border:1px dashed var(--line);background:var(--surface);user-select:none}
+.projmore:hover{color:var(--accent);border-color:var(--accent)}
+.projmore.hidden{display:none}
+/* 项目管理：拖拽排序 */
+#projRows tr.dragging{opacity:.4;background:var(--accent-soft)}
+#projRows tr[draggable]{transition:background .12s}
+#projRows tr[draggable]:hover{background:var(--surface-2)}
+.drahandle{user-select:none;cursor:grab}
+.drahandle:active{cursor:grabbing}
+.btn.danger{color:var(--red);border-color:var(--line)}
+.btn.danger:hover{color:#fff;background:var(--red);border-color:var(--red)}
+.spin{animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>TaskHub</div>
+  <span class="tag" id="conn">连接中…</span>
+  <div class="sep"></div>
+  <button class="btn ghost" onclick="showAgents()">节点 <span id="agentCount">0</span></button>
+  <button class="btn ghost" onclick="showProjects()">项目</button>
+  <button class="btn" onclick="openLogin()">管理口令</button>
+</div>
+
+<div class="wrap">
+
+  <div class="row wrapline" style="margin-bottom:14px;align-items:flex-start">
+    <div id="projFilters" class="row wrapline" style="gap:6px;flex:1;min-width:0"></div>
+    <span class="projmore hidden" id="projMore" onclick="toggleProjMore()" style="margin-left:8px;flex:0 0 auto"></span>
+    <button class="btn" onclick="openTaskModal()" style="margin-left:10px;flex:0 0 auto">+ 新建任务</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-v="all" onclick="setView('all')">全部</button>
+    <button class="tab" data-v="pending" onclick="setView('pending')">待领取</button>
+    <button class="tab" data-v="running" onclick="setView('running')">执行中</button>
+    <button class="tab" data-v="review" onclick="setView('review')">待验收</button>
+    <button class="tab" data-v="done" onclick="setView('done')">已完成</button>
+    <button class="tab" data-v="failed" onclick="setView('failed')">失败</button>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th style="width:52px">#</th><th>任务</th><th style="width:150px">项目</th>
+        <th style="width:78px">状态</th><th style="width:110px">执行者</th>
+        <th style="width:120px">标签</th><th style="width:130px">更新时间</th>
+      </tr></thead>
+      <tbody id="taskRows"></tbody>
+    </table>
+    <div class="empty" id="taskEmpty" style="display:none">还没有任务，点右上角新建一个</div>
+  </div>
+
+</div>
+
+<div id="modal"><div class="modal-box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin;
+let TOKEN = localStorage.getItem('taskhub_token') || '';
+let state = {projects:[], agents:[], tasks:[], view:'all', project:0, editing:null, files:[], existing:[]};
+
+// ---------- 基础
+async function api(path, opts={}){
+  const o = Object.assign({}, opts);
+  o.headers = Object.assign({'X-Admin-Token':TOKEN}, opts.headers||{});
+  if(o.body && !(o.body instanceof FormData)){
+    o.headers['Content-Type']='application/json';
+    o.body = JSON.stringify(o.body);
+  }
+  const r = await fetch(API+path, o);
+  if(!r.ok){
+    let msg = r.statusText;
+    try{ msg = (await r.json()).detail || msg; }catch(e){}
+    throw new Error(msg);
+  }
+  return r.status===204 ? null : r.json();
+}
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2400);
+}
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(s){
+  if(!s) return '—';
+  const d=new Date(s); if(isNaN(d)) return s;
+  return d.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function ago(s){
+  if(!s) return '—';
+  const diff=(Date.now()-new Date(s).getTime())/1000;
+  if(diff<60) return '刚刚';
+  if(diff<3600) return Math.floor(diff/60)+' 分钟前';
+  if(diff<86400) return Math.floor(diff/3600)+' 小时前';
+  return fmtTime(s);
+}
+const STATUS_TEXT={pending:'待领取',claimed:'已领取',running:'执行中',review:'待验收',done:'已完成',failed:'失败',cancelled:'已取消'};
+
+// ---------- 加载
+// 窗口尺寸变化会改变每行能放几个项目，需重算展开按钮的显隐
+let projResizeTimer=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(projResizeTimer);
+  projResizeTimer=setTimeout(()=>{
+    const box=document.getElementById('projFilters');
+    if(box) syncProjMore();
+  },120);
+});
+
+async function loadProjects(){
+  state.projects = await api('/api/projects');
+  renderProjFilters();
+}
+async function loadAgents(){
+  state.agents = await api('/api/agents');
+  document.getElementById('agentCount').textContent = state.agents.filter(a=>a.enabled).length;
+}
+async function loadTasks(){
+  let q='/api/tasks?limit=500';
+  if(state.project) q+='&project_id='+state.project;
+  state.tasks = await api(q);
+  renderTasks();
+}
+async function refresh(){ await Promise.all([loadProjects(),loadAgents(),loadTasks()]); }
+
+function renderProjFilters(){
+  const box=document.getElementById('projFilters');
+  let h=`<span class="projchip ${state.project?'':'on'}" onclick="pickProject(0)">全部项目</span>`;
+  h+=state.projects.map(p=>`<span class="projchip ${state.project===p.id?'on':''}" onclick="pickProject(${p.id})">
+        ${esc(p.name)} <span style="opacity:.6">${p.stats.pending||0}待/${p.stats.done||0}成</span></span>`).join('');
+  box.innerHTML=h;
+  // 布局尺寸只有在写入 DOM 后才准确，故分两步：先渲染再测量
+  requestAnimationFrame(()=>syncProjMore());
+}
+
+function syncProjMore(){
+  const box=document.getElementById('projFilters');
+  const more=document.getElementById('projMore');
+  if(!more) return;
+  const expanded=box.classList.contains('expanded');
+
+  if(!expanded && state.project){
+    // 收起时若选中项落在首行之外，自动展开，避免"选中的项目看不见"
+    const sel=box.querySelector('.projchip.on');
+    if(sel && sel.offsetLeft+sel.offsetWidth > box.clientWidth+2){
+      box.classList.add('expanded');
+      return requestAnimationFrame(()=>syncProjMore());
+    }
+  }
+  // 一屏放得下就不需要展开按钮
+  const overflow=box.scrollWidth>box.clientWidth+2;
+  more.textContent = expanded ? '收起 ▲' : '展开全部 ▾';
+  more.classList.toggle('hidden', !overflow && !expanded);
+}
+
+function toggleProjMore(){
+  const box=document.getElementById('projFilters');
+  box.classList.toggle('expanded');
+  syncProjMore();
+}
+function pickProject(id){ state.project=id; document.getElementById('projFilters').classList.remove('expanded'); renderProjFilters(); loadTasks(); }
+function setView(v){
+  state.view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.v===v));
+  renderTasks();
+}
+
+function renderTasks(){
+  let list = state.tasks;
+  if(state.view==='pending') list=list.filter(t=>t.status==='pending');
+  else if(state.view==='running') list=list.filter(t=>['claimed','running'].includes(t.status));
+  else if(state.view!=='all') list=list.filter(t=>t.status===state.view);
+
+  const tb=document.getElementById('taskRows');
+  document.getElementById('taskEmpty').style.display = list.length?'none':'block';
+  tb.innerHTML=list.map(t=>`<tr class="clickable" onclick="openTask(${t.id})">
+    <td class="mono" style="color:var(--text-3)">${t.seq}</td>
+    <td><div style="font-weight:500">${esc(t.title)}</div>
+      ${t.result_summary?`<div style="font-size:12px;color:var(--green)">✓ ${esc(t.result_summary.slice(0,90))}</div>`:''}
+      ${t.error?`<div style="font-size:12px;color:var(--red)">✕ ${esc(t.error.slice(0,90))}</div>`:''}
+    </td>
+    <td style="color:var(--text-2)">${esc(t.project_name)}</td>
+    <td><span class="badge b-${t.status}">${STATUS_TEXT[t.status]||t.status}</span></td>
+    <td style="color:var(--text-2)">${esc(t.assigned_agent||'—')}</td>
+    <td>${(t.required_labels||[]).map(l=>`<span class="chip">${esc(l)}</span>`).join(' ')||'<span style="color:var(--text-3)">—</span>'}</td>
+    <td style="color:var(--text-3);font-size:12px">${ago(t.finished_at||t.claimed_at||t.created_at)}</td>
+  </tr>`).join('');
+}
+
+// ---------- 项目管理
+function showProjects(){
+  const rows = state.projects.map(p=>`<tr draggable="true" data-pid="${p.id}" ondragstart="dragProjStart(event,${p.id})" ondragover="dragProjOver(event)" ondrop="dropProj(event)" ondragend="dragProjEnd()">
+    <td style="width:34px;cursor:grab" title="拖动排序">
+      <span class="drahandle" style="color:var(--text-3);font-size:15px;line-height:1">⠿</span></td>
+    <td><b>${esc(p.name)}</b><div class="hint">${esc(p.description||'')}</div></td>
+    <td class="mono" style="font-size:12px">${esc(p.repo_url||'—')}<div class="hint">${esc(p.repo_path||'未设本地路径')}</div></td>
+    <td class="mono">${esc(p.branch)}</td>
+    <td style="font-size:12px;color:var(--text-2)">${p.stats.total} 任务 · ${p.stats.active||0} 执行中 · ${p.stats.done||0} 完成</td>
+    <td style="white-space:nowrap;text-align:right">
+      <button class="btn ghost" onclick='editProject(${JSON.stringify(p).replace(/</g,"\\u003c")})'>编辑</button>
+      <button class="btn ghost danger" onclick="deleteProject(${p.id},'${esc(p.name).replace(/'/g,"")}',${p.stats.total})">删除</button>
+    </td>
+  </tr>`).join('');
+
+  modal(`<h3>项目 <span class="hint" style="font-weight:400">共 ${state.projects.length} 个 · 拖动左侧 ⠿ 可排序</span></h3>
+  <div class="card" style="margin-bottom:14px;display:flex;gap:8px">
+    <button class="btn primary" onclick="editProject(null)">+ 新建项目</button>
+    <button class="btn" onclick="resetProjOrder()">恢复默认排序</button>
+    <div style="flex:1"></div>
+    <span class="hint" id="projSortHint" style="align-self:center"></span>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><table id="projTable">
+    <thead><tr><th colspan="2">名称</th><th>仓库</th><th>分支</th><th>状态</th><th style="text-align:right">操作</th></tr></thead>
+    <tbody id="projRows">${rows||'<tr><td colspan="6" class="empty">还没有项目</td></tr>'}</tbody></table></div>`);
+}
+
+// ---- 拖拽排序 ----
+let dragPid=null;
+function dragProjStart(e,pid){
+  dragPid=pid;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+  // Firefox 必须 setData 才能触发 dragstart 之外的 drop
+  try{ e.dataTransfer.setData('text/plain',String(pid)); }catch(_){}
+}
+function dragProjOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  const row=e.currentTarget;
+  if(row.dataset.pid==String(dragPid)) return;
+  const box=document.getElementById('projRows');
+  const dragging=box.querySelector('.dragging');
+  if(!dragging) return;
+  // 放在鼠标所在位置的上半或下半，决定插到前面还是后面
+  const r=row.getBoundingClientRect();
+  const after=(e.clientY-r.top)>r.height/2;
+  box.insertBefore(dragging, after?row.nextSibling:row);
+}
+async function dropProj(e){
+  e.preventDefault();
+  await persistProjOrder();
+}
+function dragProjEnd(){
+  dragPid=null;
+  document.querySelectorAll('#projRows .dragging').forEach(r=>r.classList.remove('dragging'));
+}
+async function persistProjOrder(){
+  const ids=[...document.querySelectorAll('#projRows tr[data-pid]')].map(r=>+r.dataset.pid);
+  const orig=state.projects.map(p=>p.id);
+  if(ids.join(',')===orig.join(',')) return;           // 顺序没变，不打扰后端
+  state.projects.sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));
+  const hint=document.getElementById('projSortHint');
+  try{
+    await api('/api/projects/reorder',{method:'POST',body:{ids}});
+    if(hint){ hint.textContent='顺序已保存'; setTimeout(()=>hint.textContent='',2000); }
+  }catch(e){ toast(e.message); showProjects(); }
+}
+async function resetProjOrder(){
+  try{
+    await api('/api/projects/reorder',{method:'POST',body:{ids:state.projects.map(p=>p.id).sort((a,b)=>a-b)}});
+    await loadProjects(); showProjects(); toast('已恢复默认排序');
+  }catch(e){ toast(e.message); }
+}
+
+// ---- 删除 ----
+async function deleteProject(id,name,nTask){
+  const msg = nTask
+    ? `确定删除项目「${name}」？\n\n该项目下有 ${nTask} 个任务，会一并删除，此操作不可撤销。`
+    : `确定删除项目「${name}」？此操作不可撤销。`;
+  if(!confirm(msg)) return;
+  try{
+    const r=await api('/api/projects/'+id,{method:'DELETE'});
+    // 当前筛选正指向被删项目时，重置回"全部项目"
+    if(state.project===id) state.project=0;
+    await loadProjects(); await loadTasks(); showProjects();
+    toast(r.deleted_tasks?`已删除项目及 ${r.deleted_tasks} 个任务`:'已删除项目');
+  }catch(e){ toast(e.message); }
+}
+
+function editProject(p){
+  const x = p||{name:'',repo_url:'',branch:'main',repo_path:'',description:'',command:''};
+  modal(`<h3>${p?'编辑':'新建'}项目</h3>
+    <div class="grid"><div><label>项目名</label><input type="text" id="p_name" value="${esc(x.name)}" placeholder="NE-NEW Word Addin"></div>
+    <div><label>Git 仓库地址</label><input type="text" id="p_url" value="${esc(x.repo_url)}" placeholder="https://github.com/you/repo.git"></div></div>
+    <div class="grid"><div><label>默认分支</label><input type="text" id="p_branch" value="${esc(x.branch)}"></div>
+    <div><label>本机路径（agent 侧使用）</label><input type="text" id="p_path" value="${esc(x.repo_path)}" placeholder="D:\\work\\repo"></div></div>
+    <div style="margin-bottom:10px"><label>描述</label><input type="text" id="p_desc" value="${esc(x.description)}"></div>
+    <div style="margin-bottom:12px"><label>自动执行命令（可选，留空则交给 WorkBuddy 定期任务）</label>
+      <input type="text" id="p_cmd" value="${esc(x.command||'')}" placeholder="dotnet build -c Release">
+      <div class="hint">纯命令类任务（构建、测试、打包）填这里，agent 会直接执行并回写结果，不需要 AI 介入</div></div>
+    <div class="row"><button class="btn primary" onclick="saveProject(${p?p.id:0})">保存</button>
+    <button class="btn" onclick="closeModal()">取消</button></div>`);
+}
+async function saveProject(id){
+  const body={name:$('#p_name').value, repo_url:$('#p_url').value, branch:$('#p_branch').value,
+              repo_path:$('#p_path').value, description:$('#p_desc').value, command:$('#p_cmd').value};
+  if(!body.name) return toast('项目名不能为空');
+  // 重名校验（新建时后端也会拦，这里提前给出提示）
+  const dup=state.projects.find(p=>p.name===body.name && p.id!==id);
+  if(dup) return toast('已存在同名项目');
+  try{
+    if(id) await api('/api/projects/'+id,{method:'PATCH',body});
+    else await api('/api/projects',{method:'POST',body});
+    await loadProjects();
+    // 从项目页进来就回项目页，从主页进来就回主页
+    if(id) showProjects(); else closeModal();
+    toast('已保存');
+  }catch(e){ toast(e.message); }
+}
+const $ = s=>document.querySelector(s);
+
+// ---------- 节点管理
+function showAgents(){
+  const rows = state.agents.map(a=>`<tr>
+    <td><b>${esc(a.name)}</b><div class="hint mono">${esc(a.identity)}</div></td>
+    <td>${(a.labels||[]).map(l=>`<span class="chip">${esc(l)}</span>`).join(' ')||'<span style="color:var(--text-3)">无</span>'}</td>
+    <td class="mono" style="font-size:12px">${esc(a.workspace||'—')}</td>
+    <td style="font-size:12px">${a.last_seen?`<span style="color:var(--green)">${ago(a.last_seen)}</span>`:'<span style="color:var(--red)">未连接</span>'}
+      ${a.current_task?`<div class="hint">执行中 #${(state.tasks.find(t=>t.id===a.current_task)||{}).seq||''}</div>`:''}</td>
+    <td><span class="badge ${a.enabled?'b-done':'b-pending'}">${a.enabled?'在线启用':'已停用'}</span></td>
+    <td class="row" style="gap:4px">
+      <button class="btn ghost" onclick="toggleAgent(${a.id},${!a.enabled})">${a.enabled?'停用':'启用'}</button>
+      <button class="btn ghost" onclick="rotateToken(${a.id},'${esc(a.name)}')">重置口令</button>
+    </td></tr>`).join('');
+
+  modal(`<h3>执行节点</h3>
+  <div class="card" style="margin-bottom:14px;background:var(--blue-soft);border-color:#b5d4f4">
+    <b style="color:var(--blue)">接入方式</b>
+    <div class="hint" style="color:var(--blue);margin-top:4px">两台电脑各注册一个节点。在该电脑的 agent 配置里填入下发的 token，agent 会按身份标签自动领取任务。</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th>节点</th><th>标签</th><th>工作区</th><th>最近心跳</th><th>状态</th><th></th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" class="empty">还没有节点</td></tr>'}</tbody></table></div>
+  <div style="margin-top:12px"><button class="btn primary" onclick="closeModal();editAgent()">+ 注册节点</button></div>`);
+}
+function editAgent(){
+  modal(`<h3>注册节点</h3>
+    <div class="grid"><div><label>节点名</label><input type="text" id="a_name" placeholder="win-a"></div>
+    <div><label>身份标识</label><input type="text" id="a_ident" placeholder="win-a / win-b"></div></div>
+    <div style="margin-bottom:10px"><label>能力标签（逗号分隔，用于匹配任务的 required_labels）</label>
+      <input type="text" id="a_labels" placeholder="win-a, delphi, windows"></div>
+    <div style="margin-bottom:12px"><label>本机项目根目录</label>
+      <input type="text" id="a_ws" placeholder="D:\\work"></div>
+    <div class="row"><button class="btn primary" onclick="saveAgent()">注册</button>
+    <button class="btn" onclick="closeModal()">取消</button></div>`);
+}
+async function saveAgent(){
+  const body={name:$('#a_name').value, identity:$('#a_ident').value|| $('#a_name').value,
+              labels:$('#a_labels').value.split(',').map(s=>s.trim()).filter(Boolean),
+              workspace:$('#a_ws').value, auto_push:true};
+  if(!body.name) return toast('节点名不能为空');
+  try{
+    const a = await api('/api/agents',{method:'POST',body});
+    closeModal(); await loadAgents();
+    showToken(a);
+  }catch(e){ toast(e.message); }
+}
+function showToken(a){
+  modal(`<h3>节点已注册：${esc(a.name)}</h3>
+    <div class="card" style="background:var(--amber-soft);border-color:#fac775">
+      <b style="color:var(--amber)">请立刻保存 token</b>
+      <div class="hint" style="color:var(--amber);margin-bottom:8px">填入该电脑 agent 的配置文件。这个窗口关闭后只能通过「重置口令」再次查看。</div>
+      <div class="mono" style="background:#fff;padding:8px;border-radius:6px;word-break:break-all">${esc(a.token)}</div>
+    </div>
+    <div class="hint" style="margin-bottom:10px">写入 <span class="mono">agent.json</span>：</div>
+    <div class="logs" style="max-height:none">{
+  "server": "${API}",
+  "name": "${a.name}",
+  "identity": "${a.identity}",
+  "token": "${a.token}",
+  "labels": [${a.labels.map(l=>'"'+l+'"').join(', ')}],
+  "workspace": "${a.workspace}"
+}</div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" onclick="closeModal();showAgents()">完成</button></div>`);
+}
+async function toggleAgent(id,en){ try{ await api('/api/agents/'+id,{method:'PATCH',body:{enabled:en}}); await loadAgents(); toast('已更新'); }catch(e){ toast(e.message); } }
+async function rotateToken(id,name){
+  if(!confirm(`重置 ${name} 的 token？该电脑的 agent 需要同步更新配置。`)) return;
+  const r = await api(`/api/agents/${id}/rotate-token`,{method:'POST'});
+  showToken({name, token:r.token, labels:[]});
+}
+
+// ---------- 任务
+function openTaskModal(){
+  if(!state.projects.length) return toast('请先创建一个项目');
+  state.editing=null; state.files=[]; state.existing=[];
+  const opts = state.projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const labels = [...new Set(state.agents.flatMap(a=>a.labels))];
+  modal(`<h3>新建任务</h3>
+    <div class="grid"><div><label>项目</label><select id="t_proj">${opts}</select></div>
+      <div><label>优先级（越大越先领取）</label><input type="number" id="t_prio" value="0"></div></div>
+    <div style="margin-bottom:10px"><label>标题</label><input type="text" id="t_title" placeholder="修复 DoGetData 引用丢失问题"></div>
+    <div style="margin-bottom:10px"><label>任务描述（支持 Markdown，可直接粘贴截图）</label>
+      <textarea id="t_desc" placeholder="## 背景&#10;…&#10;&#10;## 验收标准&#10;- [ ] …"></textarea></div>
+    <div class="grid3">
+      <div><label>指定标签（留空=任意节点可领）</label><input type="text" id="t_labels" placeholder="win-a, delphi"></div>
+      <div><label>指定执行者（可选）</label><select id="t_agent"><option value="">不限</option>
+        ${state.agents.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join('')}</select></div>
+      <div><label>附件</label>
+        <div class="drop" id="drop" onclick="$('#t_files').click()">拖拽 / 点击上传图片，或 Ctrl+V 粘贴截图</div>
+        <input type="file" id="t_files" multiple accept="image/*,.md,.txt,.log,.diff" style="display:none" onchange="pickFiles(this.files)">
+        <div class="thumbs" id="thumbs"></div></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" onclick="saveTask()">创建任务</button>
+    <button class="btn" onclick="closeModal()">取消</button></div>`);
+  bindDrop();
+}
+function pickFiles(fs){ [...fs].forEach(f=>state.files.push(f)); renderThumbs(); }
+function renderThumbs(){
+  document.getElementById('thumbs').innerHTML = state.files.map((f,i)=>
+    `<div class="thumb">${f.type.startsWith('image/')?`<img src="${URL.createObjectURL(f)}">`:''}
+     <div class="nm">${esc(f.name)}</div><button onclick="state.files.splice(${i},1);renderThumbs()">×</button></div>`).join('');
+}
+function bindDrop(){
+  const d=$('#drop');
+  d.ondragover=e=>{e.preventDefault();d.classList.add('over')};
+  d.ondragleave=()=>d.classList.remove('over');
+  d.ondrop=e=>{e.preventDefault();d.classList.remove('over');pickFiles(e.dataTransfer.files)};
+}
+document.addEventListener('paste',e=>{
+  if(!document.getElementById('modal').classList.contains('on')) return;
+  if(!$('#t_files')) return;
+  const items=[...(e.clipboardData?.items||[])].filter(i=>i.type.startsWith('image/'));
+  if(!items.length) return;
+  e.preventDefault();
+  items.forEach(i=>{ const f=i.getAsFile(); if(f) state.files.push(new File([f],`paste-${Date.now()}.png`,{type:f.type})); });
+  renderThumbs();
+});
+async function saveTask(){
+  const body={project_id:+$('#t_proj').value, title:$('#t_title').value, description:$('#t_desc').value,
+              priority:+$('#t_prio').value||0,
+              required_labels:$('#t_labels').value.split(',').map(s=>s.trim()).filter(Boolean),
+              assigned_agent:$('#t_agent').value};
+  if(!body.title) return toast('标题不能为空');
+  const fd=new FormData(); fd.append('body', JSON.stringify(body));
+  state.files.forEach(f=>fd.append('files',f));
+  try{ await api('/api/tasks',{method:'POST',body:fd}); closeModal(); await refresh(); toast('任务已下发'); }
+  catch(e){ toast(e.message); }
+}
+
+async function openTask(id){
+  const t = await api('/api/tasks/'+id);
+  const atts = t.attachments.map(a=>`<a href="${a.url}" target="_blank"><img class="thumb" src="${a.url}" style="width:100%;height:100%;object-fit:cover"></a>`).join('');
+  const logs = t.logs.map(l=>`<div class="logline ${l.level}"><span class="t">${fmtTime(l.created_at).slice(-5)}</span>
+      <span class="w">${esc(l.agent_name)}</span><span>${esc(l.message)}</span></div>`).join('');
+  const cmts = t.comments.map(c=>`<div class="logline"><span class="w">${esc(c.author)}</span><span>${esc(c.body)}</span></div>`).join('');
+
+  modal(`<h3>#${t.seq} ${esc(t.title)}</h3>
+  <div class="row wrapline" style="gap:6px;margin-bottom:12px">
+    <span class="badge b-${t.status}">${STATUS_TEXT[t.status]||t.status}</span>
+    <span class="chip ghost">${esc(t.project_name)}</span>
+    <span class="chip ghost">分支 ${esc(t.branch||'—')}</span>
+    ${(t.required_labels||[]).map(l=>`<span class="chip">${esc(l)}</span>`).join('')}
+    ${t.commit_sha?`<span class="mono chip" style="background:var(--green-soft);color:var(--green)">${esc(t.commit_sha.slice(0,8))}</span>`:''}
+  </div>
+  <div class="card" style="background:var(--surface-2)">
+    <div style="white-space:pre-wrap">${esc(t.description||'（无描述）')}</div>
+  </div>
+  ${t.result_summary?`<div class="card" style="background:var(--green-soft);border-color:#9fe1cb">
+      <b style="color:var(--green)">执行结果</b><div style="white-space:pre-wrap;margin-top:4px">${esc(t.result_summary)}</div></div>`:''}
+  ${t.error?`<div class="card" style="background:var(--red-soft);border-color:#f7c1c1">
+      <b style="color:var(--red)">错误</b><div style="white-space:pre-wrap;margin-top:4px">${esc(t.error)}</div></div>`:''}
+  ${t.attachments.length?`<div class="card"><b>附件 ${t.attachments.length}</b><div class="thumbs">${atts}</div></div>`:''}
+  <div class="card"><b>执行日志</b><div class="logs" style="margin-top:8px">${logs||'<span style="color:var(--text-3)">暂无</span>'}${cmts}</div>
+    <div class="row" style="margin-top:8px"><input type="text" id="cmt" placeholder="留个备注…" onkeydown="if(event.key==='Enter')addComment(${t.id})">
+      <button class="btn" onclick="addComment(${t.id})">发送</button></div></div>
+  <div class="row wrapline" style="gap:6px">
+    ${['done','failed','review','cancelled'].includes(t.status)?`<button class="btn" onclick="setStatus(${t.id},'${t.status==='done'?'pending':t.status==='cancelled'?'pending':t.status}')">退回队列</button>`:''}
+    <button class="btn" onclick="closeModal()">关闭</button>
+  </div>`);
+}
+async function setStatus(id,s){
+  try{ await api('/api/tasks/'+id,{method:'PATCH',body:{status:s}}); closeModal(); await refresh(); toast('已更新'); }
+  catch(e){ toast(e.message); }
+}
+async function addComment(id){
+  const v=$('#cmt').value.trim(); if(!v) return;
+  try{ await api(`/api/tasks/${id}/comments`,{method:'POST',body:{author:'admin',body:v}}); openTask(id); await loadTasks(); }
+  catch(e){ toast(e.message); }
+}
+
+// ---------- 登录口令
+function openLogin(){
+  modal(`<h3>管理口令</h3>
+    <div class="hint" style="margin-bottom:10px">写操作需要口令，默认 <span class="mono">taskhub</span>，部署时通过环境变量 <span class="mono">TASKHUB_ADMIN_TOKEN</span> 修改。</div>
+    <input type="password" id="pwd" placeholder="输入口令" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="row" style="margin-top:12px"><button class="btn primary" onclick="doLogin()">保存</button>
+    <button class="btn" onclick="closeModal()">取消</button></div>`);
+}
+async function doLogin(){
+  TOKEN=$('#pwd').value.trim(); localStorage.setItem('taskhub_token',TOKEN); closeModal();
+  try{ await loadProjects(); toast('口令已保存'); }catch(e){ toast('口令错误'); }
+}
+
+// ---------- modal
+function modal(html){ document.getElementById('modalBox').innerHTML=html; document.getElementById('modal').classList.add('on'); }
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+document.getElementById('modal').onclick=e=>{ if(e.target.id==='modal') closeModal(); };
+document.onkeydown=e=>{ if(e.key==='Escape') closeModal(); };
+
+// ---------- 启动
+(async function(){
+  try{
+    await refresh();
+    const c=document.getElementById('conn'); c.textContent='已连接'; c.style.color='var(--green)';
+    setInterval(()=>{ loadProjects().catch(()=>{}); loadAgents().catch(()=>{}); loadTasks().catch(()=>{}); }, 8000);
+  }catch(e){
+    const c=document.getElementById('conn'); c.textContent='连接失败'; c.style.color='var(--red)';
+    toast(e.message);
+  }
+})();
+</script>
+</body>
+</html>

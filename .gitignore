@@ -1,0 +1,10 @@
+data/
+e2e_git/
+agent_state/
+__pycache__/
+*.pyc
+.venv/
+.env
+*.log
+.taskhub/
+node_modules/
