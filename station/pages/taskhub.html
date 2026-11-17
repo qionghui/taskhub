@@ -1,0 +1,492 @@
+<!-- 替换这一段即可，不要写整页 html。导航来自 station/modules.json。 -->
+<div class="hub">
+  <p class="meta">员工把地址设成 <span id="hub-endpoint"></span>，调用 /api/v1，只传 agent_id 和 project_code。计划只在这个页面上出现。</p>
+  <div class="hub-tabs" role="tablist" aria-label="任务调度">
+    <button type="button" class="hub-tab is-current" role="tab" aria-selected="true" data-page="tasks">任务</button>
+    <button type="button" class="hub-tab" role="tab" aria-selected="false" data-page="new">新建</button>
+    <button type="button" class="hub-tab" role="tab" aria-selected="false" data-page="agents">员工</button>
+    <button type="button" class="hub-tab" role="tab" aria-selected="false" data-page="projects">项目</button>
+  </div>
+  <p class="hub-toast" id="hub-toast" hidden></p>
+
+  <section class="hub-page is-current" id="hub-tasks">
+    <div class="hub-metrics" id="hub-metrics"></div>
+    <section class="hub-panel">
+      <div class="hub-filters">
+        <select id="f-status" aria-label="状态">
+          <option value="">全部状态</option>
+          <option value="DRAFT">草稿</option>
+          <option value="READY">待领取</option>
+          <option value="RUNNING">执行中</option>
+          <option value="SUBMITTED">待验收</option>
+          <option value="DONE">已完成</option>
+          <option value="FAILED">已失败</option>
+          <option value="CANCELLED">已取消</option>
+        </select>
+        <select id="f-project" aria-label="项目"><option value="">全部项目</option></select>
+        <input id="f-q" type="text" maxlength="80" placeholder="关键字" aria-label="关键字">
+        <button type="button" class="btn" id="f-refresh">刷新</button>
+      </div>
+      <div class="hub-scroll">
+        <table class="hub-table">
+          <thead>
+            <tr><th>任务</th><th>标题</th><th>项目</th><th>优先级</th><th>状态</th><th>指派</th><th>截止</th></tr>
+          </thead>
+          <tbody id="task-rows"></tbody>
+        </table>
+      </div>
+      <p class="meta" id="task-empty" hidden>还没有任务。</p>
+    </section>
+    <section class="hub-panel" id="detail-card" hidden>
+      <div class="hub-detail-head">
+        <h2 id="d-title"></h2>
+        <span id="d-status"></span>
+      </div>
+      <dl class="hub-kv" id="d-kv"></dl>
+      <div class="hub-plan" id="d-plan" hidden>
+        <strong>计划</strong>
+        <p id="d-plan-body"></p>
+      </div>
+      <h3>时间线</h3>
+      <div id="d-events"></div>
+      <div class="hub-actions" id="d-actions"></div>
+    </section>
+  </section>
+
+  <section class="hub-page" id="hub-new">
+    <section class="hub-panel">
+      <h2>新建任务</h2>
+      <div class="hub-split">
+        <div>
+          <label class="field">标题
+            <input id="n-title" type="text" maxlength="200" required placeholder="一句话说明要做什么">
+          </label>
+          <label class="field">所属项目
+            <select id="n-project"></select>
+          </label>
+          <label class="field">优先级
+            <select id="n-priority">
+              <option>P0</option>
+              <option selected>P1</option>
+              <option>P2</option>
+              <option>P3</option>
+            </select>
+          </label>
+          <label class="field">截止时间
+            <input id="n-due" type="datetime-local">
+          </label>
+          <label class="field">指派
+            <select id="n-assignee"><option value="">不指派，放进公共池</option></select>
+          </label>
+        </div>
+        <div>
+          <label class="field">输入
+            <textarea id="n-input" rows="3" placeholder="员工开工时要看到的内容"></textarea>
+          </label>
+          <label class="field">输出位置
+            <input id="n-output" type="text" maxlength="300" placeholder="成果放在哪里">
+          </label>
+          <label class="field">验收清单
+            <textarea id="n-checklist" rows="3" placeholder="每行一条"></textarea>
+          </label>
+          <label class="field">分支
+            <input id="n-branch" type="text" value="main" maxlength="80">
+          </label>
+          <p class="hub-checks">
+            <label><input id="n-accept" type="checkbox" checked> 需要人工验收</label>
+            <label><input id="n-push" type="checkbox" checked> 必须推送代码</label>
+          </p>
+        </div>
+      </div>
+      <div class="hub-plan">
+        <strong>计划</strong>
+        <p class="meta">只在这个页面上看见，不会发给员工。</p>
+        <label class="field">背景
+          <textarea id="n-plan-bg" rows="2"></textarea>
+        </label>
+        <label class="field">备注
+          <textarea id="n-plan-notes" rows="2"></textarea>
+        </label>
+      </div>
+      <div class="hub-actions">
+        <button type="button" class="btn btn-primary" id="n-publish">发布</button>
+        <button type="button" class="btn" id="n-draft">存成草稿</button>
+      </div>
+    </section>
+  </section>
+
+  <section class="hub-page" id="hub-agents">
+    <section class="hub-panel">
+      <h2>员工</h2>
+      <div class="hub-scroll">
+        <table class="hub-table">
+          <thead>
+            <tr><th>状态</th><th>员工</th><th>项目</th><th>能力</th><th>槽位</th><th>最后心跳</th><th>当前任务</th><th></th></tr>
+          </thead>
+          <tbody id="agent-rows"></tbody>
+        </table>
+      </div>
+      <p class="meta" id="agent-empty" hidden>还没有员工。第一次来领任务时会自动建档。</p>
+    </section>
+    <section class="hub-panel">
+      <h2>登记员工</h2>
+      <div class="hub-filters">
+        <input id="a-id" type="text" maxlength="64" placeholder="例如 ai_buddy_1" aria-label="员工编号">
+        <select id="a-project" aria-label="所属项目"></select>
+        <input id="a-caps" type="text" maxlength="200" placeholder="能力，逗号分隔" aria-label="能力">
+        <input id="a-slots" type="number" min="0" value="1" aria-label="同时可领几条">
+        <button type="button" class="btn btn-primary" id="a-create">登记</button>
+      </div>
+      <p class="meta">不用口令。调用时带上员工编号和项目即可。</p>
+    </section>
+  </section>
+
+  <section class="hub-page" id="hub-projects">
+    <section class="hub-panel">
+      <h2>项目</h2>
+      <div class="hub-scroll">
+        <table class="hub-table">
+          <thead>
+            <tr><th>编码</th><th>名称</th><th>仓库</th><th>分支</th><th>能力</th><th>任务数</th></tr>
+          </thead>
+          <tbody id="project-rows"></tbody>
+        </table>
+      </div>
+      <p class="meta" id="project-empty" hidden>还没有项目。先建一个，才能派任务。</p>
+    </section>
+    <section class="hub-panel">
+      <h2>新建项目</h2>
+      <div class="hub-filters">
+        <input id="p-code" type="text" maxlength="64" placeholder="编码，例如 proj_1" aria-label="项目编码">
+        <input id="p-name" type="text" maxlength="80" placeholder="名称" aria-label="项目名称">
+        <input id="p-repo" type="text" maxlength="300" placeholder="仓库路径" aria-label="仓库路径">
+        <input id="p-branch" type="text" value="main" maxlength="80" aria-label="默认分支">
+        <button type="button" class="btn btn-primary" id="p-create">创建</button>
+      </div>
+    </section>
+  </section>
+</div>
+<script>
+(function () {
+  var STATUS = {
+    DRAFT: "草稿",
+    READY: "待领取",
+    RUNNING: "执行中",
+    SUBMITTED: "待验收",
+    DONE: "已完成",
+    FAILED: "已失败",
+    CANCELLED: "已取消"
+  };
+  var root = document.querySelector(".hub");
+  var toastTimer = 0;
+  document.getElementById("hub-endpoint").textContent = location.origin;
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function toast(message) {
+    var node = document.getElementById("hub-toast");
+    node.textContent = message;
+    node.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { node.hidden = true; }, 2500);
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    if (opts.body) {
+      opts.headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+    }
+    return fetch(path, opts).then(function (response) {
+      return response.text().then(function (text) {
+        try { return JSON.parse(text); }
+        catch (error) { return { code: response.status || 500, message: "响应读不了" }; }
+      });
+    }).catch(function () {
+      return { code: 500, message: "网络请求失败" };
+    });
+  }
+
+  function showPage(name) {
+    root.querySelectorAll(".hub-tab").forEach(function (button) {
+      var on = button.getAttribute("data-page") === name;
+      button.classList.toggle("is-current", on);
+      button.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    root.querySelectorAll(".hub-page").forEach(function (page) {
+      page.classList.toggle("is-current", page.id === "hub-" + name);
+    });
+  }
+
+  function statusBadge(status) {
+    return '<span class="hub-status ' + esc(status) + '">' + esc(STATUS[status] || status) + "</span>";
+  }
+
+  function loadOverview() {
+    api("/api/v1/admin/overview").then(function (result) {
+      if (result.code !== 0) return;
+      var counts = result.data.counts || {};
+      var alerts = result.data.alerts.overdue.length + result.data.alerts.failed.length
+        + result.data.alerts.offline_agents.length;
+      var cells = [
+        ["待领取", counts.READY || 0],
+        ["执行中", counts.RUNNING || 0],
+        ["待验收", counts.SUBMITTED || 0],
+        ["今日完成", result.data.done_today],
+        ["告警", alerts]
+      ];
+      document.getElementById("hub-metrics").innerHTML = cells.map(function (cell) {
+        return '<div class="hub-metric"><span>' + esc(cell[0]) + '</span><strong>'
+          + esc(cell[1]) + "</strong></div>";
+      }).join("");
+    });
+  }
+
+  function loadTasks() {
+    var params = new URLSearchParams();
+    var status = document.getElementById("f-status").value;
+    var project = document.getElementById("f-project").value;
+    var keyword = document.getElementById("f-q").value;
+    if (status) params.set("status", status);
+    if (project) params.set("project_code", project);
+    if (keyword) params.set("q", keyword);
+    api("/api/v1/admin/tasks?" + params).then(function (result) {
+      if (result.code !== 0) { toast(result.message); return; }
+      var rows = result.data.tasks;
+      document.getElementById("task-empty").hidden = rows.length > 0;
+      document.getElementById("task-rows").innerHTML = rows.map(function (task) {
+        return '<tr data-id="' + esc(task.task_id) + '"><td>' + esc(task.task_id)
+          + "</td><td>" + esc(task.title) + "</td><td>" + esc(task.project_code)
+          + "</td><td>" + esc(task.priority) + "</td><td>" + statusBadge(task.status)
+          + "</td><td>" + esc(task.assignee || "公共池") + "</td><td>"
+          + esc(task.due_at || "—") + "</td></tr>";
+      }).join("");
+    });
+  }
+
+  function loadDetail(id) {
+    api("/api/v1/admin/tasks/" + encodeURIComponent(id)).then(function (result) {
+      if (result.code !== 0) { toast(result.message); return; }
+      var task = result.data.task;
+      var card = document.getElementById("detail-card");
+      card.hidden = false;
+      document.getElementById("d-title").textContent = task.task_id + " " + task.title;
+      document.getElementById("d-status").innerHTML = statusBadge(task.status);
+      var workspace = task.workspace || {};
+      var pairs = [
+        ["项目", task.project_code],
+        ["优先级", task.priority],
+        ["指派", task.assignee || "公共池"],
+        ["截止", task.due_at || "—"],
+        ["输入", (task.input_context && task.input_context.text) || "—"],
+        ["输出位置", (task.output_spec && task.output_spec.target_path) || "—"],
+        ["验收", (task.acceptance_checklist || []).join("；") || "—"],
+        ["仓库", workspace.repo_path || "—"],
+        ["分支", workspace.base_branch || "—"],
+        ["重试", task.retry_count + " / " + task.max_retries],
+        ["创建", task.created_at]
+      ];
+      document.getElementById("d-kv").innerHTML = pairs.map(function (pair) {
+        return "<dt>" + esc(pair[0]) + "</dt><dd>" + esc(pair[1]) + "</dd>";
+      }).join("");
+      var plan = document.getElementById("d-plan");
+      plan.hidden = !(task.plan_background || task.plan_notes);
+      document.getElementById("d-plan-body").textContent =
+        "背景：" + (task.plan_background || "—") + "\n备注：" + (task.plan_notes || "—");
+      document.getElementById("d-events").innerHTML = result.data.events.map(function (event) {
+        var extra = event.detail && (event.detail.summary || event.detail.reason
+          || event.detail.error_message || event.detail.log_line) || "";
+        return '<p class="hub-event"><span class="hub-time">' + esc(event.ts) + "</span> "
+          + esc(event.actor) + " · " + esc(event.event)
+          + (extra ? ' <span class="meta">' + esc(extra) + "</span>" : "") + "</p>";
+      }).join("");
+      var actions = [];
+      function button(action, label, primary) {
+        actions.push('<button type="button" class="btn' + (primary ? " btn-primary" : "")
+          + '" data-act="' + action + '" data-id="' + esc(task.task_id) + '">'
+          + esc(label) + "</button>");
+      }
+      if (task.status === "DRAFT") button("publish", "发布", true);
+      if (task.status === "SUBMITTED") {
+        button("accept", "验收通过", true);
+        button("reject", "驳回重做", false);
+      }
+      if (task.status === "FAILED") button("publish", "重新派发", true);
+      if (["DRAFT", "READY", "RUNNING", "SUBMITTED", "FAILED"].indexOf(task.status) >= 0) {
+        button("cancel", "取消", false);
+      }
+      if (task.status === "FAILED") button("clone", "克隆", false);
+      document.getElementById("d-actions").innerHTML = actions.join("");
+      card.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  function runAction(id, action) {
+    var opts = { method: "POST" };
+    if (action === "reject") {
+      var reason = window.prompt("驳回原因") || "";
+      opts.body = JSON.stringify({ reason: reason });
+    }
+    api("/api/v1/admin/tasks/" + encodeURIComponent(id) + "/" + action, opts).then(function (result) {
+      toast(result.code === 0 ? "已完成" : result.message);
+      loadTasks();
+      loadOverview();
+      if (action === "clone" && result.code === 0) loadDetail(result.data.task_id);
+      else loadDetail(id);
+    });
+  }
+
+  function loadAgents() {
+    api("/api/v1/admin/agents").then(function (result) {
+      if (result.code !== 0) return;
+      var agents = result.data.agents;
+      document.getElementById("agent-empty").hidden = agents.length > 0;
+      document.getElementById("agent-rows").innerHTML = agents.map(function (agent) {
+        var tasks = (agent.current_tasks || []).map(function (task) { return task.task_id; }).join("、");
+        return "<tr><td><span class=\"hub-dot" + (agent.online ? " is-on" : "")
+          + '"></span>' + (agent.online ? "在线" : "离线") + "</td><td><strong>"
+          + esc(agent.agent_id) + "</strong>"
+          + (agent.status === "disabled" ? "（停用）" : "") + "</td><td>"
+          + esc(agent.project_code) + "</td><td>"
+          + esc((agent.capabilities || []).join("、")) + "</td><td>"
+          + esc(agent.concurrency_slots) + "</td><td>" + esc(agent.last_heartbeat_at || "—")
+          + "</td><td>" + esc(tasks || "—") + '</td><td><button type="button" class="btn" data-toggle="'
+          + esc(agent.agent_id) + '">' + (agent.status === "disabled" ? "启用" : "停用")
+          + "</button></td></tr>";
+      }).join("");
+      var options = '<option value="">不指派，放进公共池</option>' + agents.filter(function (agent) {
+        return agent.status !== "disabled";
+      }).map(function (agent) {
+        return '<option value="' + esc(agent.agent_id) + '">' + esc(agent.agent_id) + "</option>";
+      }).join("");
+      document.getElementById("n-assignee").innerHTML = options;
+    });
+  }
+
+  function loadProjects() {
+    api("/api/v1/admin/projects").then(function (result) {
+      if (result.code !== 0) return;
+      var projects = result.data.projects;
+      document.getElementById("project-empty").hidden = projects.length > 0;
+      document.getElementById("project-rows").innerHTML = projects.map(function (project) {
+        return "<tr><td><strong>" + esc(project.code) + "</strong></td><td>" + esc(project.name)
+          + "</td><td>" + esc(project.repo_path || "—") + "</td><td>" + esc(project.default_branch)
+          + "</td><td>" + esc((project.capabilities || []).join("、")) + "</td><td>"
+          + esc(project.task_count) + "</td></tr>";
+      }).join("");
+      var options = projects.map(function (project) {
+        return '<option value="' + esc(project.code) + '">' + esc(project.code) + " "
+          + esc(project.name) + "</option>";
+      }).join("");
+      document.getElementById("n-project").innerHTML = options;
+      document.getElementById("a-project").innerHTML = options;
+      document.getElementById("f-project").innerHTML = '<option value="">全部项目</option>' + options;
+    });
+  }
+
+  function createTask(publish) {
+    var project = document.getElementById("n-project").value;
+    var title = document.getElementById("n-title").value.trim();
+    if (!title || !project) { toast("先写标题，并选择项目"); return; }
+    var due = document.getElementById("n-due").value;
+    var body = {
+      title: title,
+      project_code: project,
+      priority: document.getElementById("n-priority").value,
+      due_at: due ? due + ":00Z" : null,
+      assignee: document.getElementById("n-assignee").value || null,
+      input_context: { text: document.getElementById("n-input").value },
+      output_spec: { target_path: document.getElementById("n-output").value },
+      acceptance_checklist: document.getElementById("n-checklist").value.split("\n").map(function (line) {
+        return line.trim();
+      }).filter(Boolean),
+      workspace: {
+        base_branch: document.getElementById("n-branch").value || "main",
+        require_push: document.getElementById("n-push").checked
+      },
+      require_human_acceptance: document.getElementById("n-accept").checked,
+      plan_background: document.getElementById("n-plan-bg").value,
+      plan_notes: document.getElementById("n-plan-notes").value,
+      publish: publish
+    };
+    api("/api/v1/admin/tasks", { method: "POST", body: JSON.stringify(body) }).then(function (result) {
+      toast(result.code === 0 ? "已创建 " + result.data.task_id : result.message);
+      if (result.code === 0) {
+        loadTasks();
+        loadOverview();
+        showPage("tasks");
+      }
+    });
+  }
+
+  root.addEventListener("click", function (event) {
+    var tab = event.target.closest(".hub-tab");
+    if (tab) showPage(tab.getAttribute("data-page"));
+    var row = event.target.closest("#task-rows tr[data-id]");
+    if (row) loadDetail(row.getAttribute("data-id"));
+    var action = event.target.closest("[data-act]");
+    if (action) runAction(action.getAttribute("data-id"), action.getAttribute("data-act"));
+    var toggle = event.target.closest("[data-toggle]");
+    if (toggle) {
+      var agentId = toggle.getAttribute("data-toggle");
+      api("/api/v1/admin/agents/" + encodeURIComponent(agentId) + "/toggle", { method: "POST" })
+        .then(function (result) {
+          toast(result.code === 0 ? "已切换" : result.message);
+          loadAgents();
+        });
+    }
+  });
+
+  document.getElementById("n-publish").addEventListener("click", function () { createTask(true); });
+  document.getElementById("n-draft").addEventListener("click", function () { createTask(false); });
+  document.getElementById("f-refresh").addEventListener("click", loadTasks);
+  document.getElementById("f-status").addEventListener("change", loadTasks);
+  document.getElementById("f-project").addEventListener("change", loadTasks);
+  document.getElementById("f-q").addEventListener("input", loadTasks);
+  document.getElementById("a-create").addEventListener("click", function () {
+    var agentId = document.getElementById("a-id").value.trim();
+    var project = document.getElementById("a-project").value;
+    if (!agentId || !project) { toast("先写员工编号，并选择项目"); return; }
+    api("/api/v1/admin/agents", {
+      method: "POST",
+      body: JSON.stringify({
+        agent_id: agentId,
+        project_code: project,
+        capabilities: document.getElementById("a-caps").value.split(",").map(function (item) {
+          return item.trim();
+        }).filter(Boolean),
+        concurrency_slots: parseInt(document.getElementById("a-slots").value, 10) || 1
+      })
+    }).then(function (result) {
+      toast(result.code === 0 ? "已登记 " + result.data.agent_id : result.message);
+      if (result.code === 0) loadAgents();
+    });
+  });
+  document.getElementById("p-create").addEventListener("click", function () {
+    var code = document.getElementById("p-code").value.trim();
+    var name = document.getElementById("p-name").value.trim();
+    if (!code || !name) { toast("编码和名称都要填"); return; }
+    api("/api/v1/admin/projects", {
+      method: "POST",
+      body: JSON.stringify({
+        code: code,
+        name: name,
+        repo_path: document.getElementById("p-repo").value.trim(),
+        default_branch: document.getElementById("p-branch").value || "main"
+      })
+    }).then(function (result) {
+      toast(result.code === 0 ? "项目已创建" : result.message);
+      if (result.code === 0) loadProjects();
+    });
+  });
+
+  loadOverview();
+  loadProjects();
+  loadTasks();
+  loadAgents();
+  setInterval(loadOverview, 15000);
+})();
+</script>

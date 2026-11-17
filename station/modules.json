@@ -1,0 +1,36 @@
+{
+  "name": "工作台",
+  "modules": [
+    {
+      "id": "work",
+      "name": "工作计划",
+      "group": "日常",
+      "summary": "只记事项。新的放在最后，完成的可以再查"
+    },
+    {
+      "id": "learn",
+      "name": "小孩学习",
+      "group": "日常",
+      "summary": "点开主题，顺着思维导图看卡片"
+    },
+    {
+      "id": "taskhub",
+      "name": "任务调度",
+      "group": "调度",
+      "summary": "派任务给各电脑上的 AI 员工，由他们领取并交成果"
+    },
+    {
+      "id": "piggy",
+      "name": "攒钱",
+      "group": "日常",
+      "summary": "青岚换 iPad，记下任务和存下的钱"
+    },
+    {
+      "id": "erp",
+      "name": "简易 ERP",
+      "group": "经营",
+      "summary": "记商品、库存和订单",
+      "status": "准备中"
+    }
+  ]
+}

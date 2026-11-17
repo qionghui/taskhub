@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>💰 攒钱大挑战</title>
+<style>
+/* ====== 基础重置 ====== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #FF6B9D;
+  --primary-light: #FFC2D6;
+  --secondary: #4ECDC4;
+  --secondary-light: #C2F0EC;
+  --accent: #FFD93D;
+  --accent-light: #FFF5C2;
+  --bg: #FFF8F0;
+  --card: #FFFFFF;
+  --text: #2D3436;
+  --text-light: #636E72;
+  --success: #6BCB77;
+  --danger: #FF6B6B;
+  --radius: 16px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+html { font-size: 16px; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* ====== 顶部横幅 ====== */
+.banner {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  padding: 2rem 1rem 3.5rem;
+  text-align: center;
+  border-radius: 0 0 24px 24px;
+  position: relative;
+}
+.banner h1 {
+  color: #fff;
+  font-size: 1.75rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  margin-bottom: 0.25rem;
+}
+.banner .subtitle {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.95rem;
+}
+
+/* ====== 主容器 ====== */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* ====== 目标卡片 ====== */
+.goal-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem;
+  margin-top: -2.5rem;
+  position: relative;
+  z-index: 1;
+}
+.goal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.goal-header .icon { font-size: 2.5rem; }
+.goal-header h2 { font-size: 1.2rem; color: var(--text); flex: 1; }
+.goal-header .header-btns { margin-left: auto; display: flex; gap: 4px; }
+.goal-header .edit-btn {
+  background: var(--accent-light);
+  border: none;
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.goal-header .edit-btn:hover { transform: scale(1.1); }
+
+/* 进度条 */
+.progress-wrap { margin-bottom: 0.5rem; }
+.progress-bar {
+  width: 100%;
+  height: 28px;
+  background: #F0F0F0;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+  border-radius: 14px;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.8rem;
+  min-width: 40px;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+}
+.progress-labels strong { color: var(--primary); font-size: 1rem; }
+
+/* ====== 统计卡片 ====== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.stat-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.stat-card .stat-icon { font-size: 1.5rem; }
+.stat-card .stat-value {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: var(--text);
+  margin: 0.15rem 0;
+}
+.stat-card .stat-label { font-size: 0.72rem; color: var(--text-light); }
+
+/* ====== Tab 导航 ====== */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0 1rem;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 0.35rem;
+  box-shadow: var(--shadow);
+}
+.tab-btn {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: var(--text-light);
+  font-weight: 600;
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255,107,157,0.3);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ====== 区块标题 ====== */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+.section-title .emoji { font-size: 1.3rem; }
+
+/* ====== 任务区块 ====== */
+.task-list { list-style: none; }
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s;
+}
+.task-item:active { transform: scale(0.98); }
+.task-item.done { opacity: 0.6; }
+.task-item.done .task-name { text-decoration: line-through; color: var(--text-light); }
+
+.task-check {
+  width: 26px; height: 26px;
+  border: 2.5px solid var(--secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  background: #fff;
+}
+.task-check.checked {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.task-info { flex: 1; min-width: 0; }
+.task-name { font-size: 0.95rem; font-weight: 500; }
+.task-type-tag {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 0.4rem;
+  white-space: nowrap;
+}
+.task-type-tag.daily { background: var(--primary-light); color: var(--primary); }
+.task-type-tag.count { background: var(--secondary-light); color: var(--secondary); }
+.task-reward {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: bold;
+  background: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.task-delete {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.2s;
+}
+.task-delete:hover { color: var(--danger); }
+
+/* 次数任务行内进度 */
+.count-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.count-inline-bar {
+  flex: 1;
+  height: 6px;
+  background: #F0F0F0;
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 40px;
+}
+.count-inline-fill {
+  height: 100%;
+  background: var(--secondary);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.count-inline-text {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+.count-inline-text.done { color: var(--success); font-weight: bold; }
+.count-btn {
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.count-btn:hover { opacity: 0.85; }
+.count-btn.undo { background: #E8E8E8; color: var(--text-light); }
+
+/* ====== 存钱记录 ====== */
+.record-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+  box-shadow: var(--shadow);
+}
+.record-date {
+  width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.record-date .day { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
+.record-date .month { font-size: 0.7rem; color: var(--text-light); }
+.record-info { flex: 1; min-width: 0; }
+.record-desc { font-size: 0.9rem; color: var(--text); }
+.record-amount {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--success);
+  white-space: nowrap;
+}
+.record-amount.minus { color: var(--danger); }
+.record-delete {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.record-delete:hover { color: var(--danger); }
+
+/* ====== 成就徽章 ====== */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+.badge {
+  text-align: center;
+  padding: 1rem 0.5rem;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+.badge.unlocked { border: 2px solid var(--accent); }
+.badge.locked { opacity: 0.4; filter: grayscale(0.7); }
+.badge .badge-icon { font-size: 2rem; }
+.badge .badge-name { font-size: 0.75rem; margin-top: 0.3rem; }
+.badge .badge-desc { font-size: 0.68rem; color: var(--text-light); }
+
+/* ====== 浮动添加按钮 ====== */
+.fab-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 50;
+}
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fab:hover { transform: scale(1.1); }
+.fab:active { transform: scale(0.95); }
+.fab-main { background: linear-gradient(135deg, var(--primary), #E5568C); color: #fff; }
+.fab-temp { background: linear-gradient(135deg, var(--secondary), #3DBDB5); color: #fff; }
+.fab-record { background: linear-gradient(135deg, var(--accent), #E5C02E); color: #fff; }
+
+/* ====== 模态框 ====== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+}
+.modal-box h3 { margin-bottom: 0.5rem; text-align: center; }
+.modal-box .emoji-big { font-size: 2.5rem; text-align: center; margin-bottom: 0.3rem; }
+.modal-box p { color: var(--text-light); margin-bottom: 1rem; font-size: 0.85rem; text-align: center; }
+.modal-box input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 2px solid #E8E8E8;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 0.6rem;
+  transition: border-color 0.2s;
+}
+.modal-box input:focus { border-color: var(--primary); }
+.modal-box input[type="number"] { text-align: center; }
+
+/* 任务类型选择器 */
+.type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+.type-option {
+  flex: 1;
+  padding: 0.6rem;
+  border: 2px solid #E8E8E8;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: var(--text-light);
+}
+.type-option.active {
+  border-color: var(--secondary);
+  background: var(--secondary-light);
+  color: var(--secondary);
+}
+.type-option.active.daily {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.input-row input { margin-bottom: 0; }
+.input-row input:first-child { flex: 1; }
+.input-row input[type="number"] { width: 90px; }
+
+.target-row { display: none; }
+.target-row.show { display: block; }
+
+.modal-box .modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.modal-box .modal-actions button {
+  flex: 1;
+  padding: 0.65rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-box .btn-primary {
+  background: linear-gradient(135deg, var(--primary), #E5568C);
+  color: #fff;
+}
+.modal-box .btn-secondary {
+  background: #F0F0F0;
+  color: var(--text-light);
+}
+
+/* ====== 庆祝动画 ====== */
+.celebrate {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  font-size: 3rem;
+  animation: pop 0.6s ease;
+}
+.celebrate.show { display: block; }
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  50% { transform: translate(-50%, -50%) scale(1.3); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ====== 空状态 ====== */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-light);
+}
+.empty-state .emoji { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+
+/* ====== 响应式 ====== */
+@media (max-width: 600px) {
+  .banner h1 { font-size: 1.4rem; }
+  .banner .subtitle { font-size: 0.8rem; }
+  .goal-card { padding: 1.2rem; }
+  .stats-row { gap: 0.5rem; }
+  .stat-card { padding: 0.65rem 0.3rem; }
+  .stat-card .stat-value { font-size: 1rem; }
+  .stat-card .stat-label { font-size: 0.65rem; }
+  .stat-card .stat-icon { font-size: 1.2rem; }
+  .tab-btn { font-size: 0.75rem; padding: 0.55rem 0.3rem; }
+  .task-item, .record-item { padding: 0.7rem 0.8rem; }
+  .section-title { font-size: 1rem; }
+  .badges-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+  .fab-container { bottom: 1rem; right: 1rem; }
+  .fab { width: 48px; height: 48px; font-size: 1.3rem; }
+  .modal-box { padding: 1.2rem; }
+  .input-row input[type="number"] { width: 70px; }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .container { max-width: 700px; }
+}
+
+@media (min-width: 901px) {
+  .container { max-width: 860px; }
+}
+
+@media print {
+  .tabs, .fab-container, .edit-btn, .task-delete, .record-delete { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部横幅 -->
+<div class="banner">
+  <h1>💰 攒钱大挑战</h1>
+  <div class="subtitle" id="bannerSubtitle">向目标前进中…</div>
+</div>
+
+<div class="container">
+
+  <!-- 目标卡片 -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <span class="icon">🎯</span>
+      <h2 id="goalTitle">点击设置目标</h2>
+      <div class="header-btns">
+        <button class="edit-btn" onclick="openGoalModal()" title="设置目标">✏️</button>
+        <button class="edit-btn" onclick="openDateModal()" title="补记日期">📅</button>
+        <button class="edit-btn" onclick="confirmResetData()" title="重置为初始数据">🔄</button>
+        <button class="edit-btn" onclick="confirmClearData()" title="清空数据">🗑️</button>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%">0%</div>
+      </div>
+      <div class="progress-labels">
+        <span>已攒：<strong id="currentAmount">¥0</strong></span>
+        <span>目标：<strong id="targetAmount">¥0</strong></span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value" id="statDays">0</div>
+        <div class="stat-label">坚持天数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="statTasks">0</div>
+        <div class="stat-label">完成任务</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value" id="statBadges">0</div>
+        <div class="stat-label">获得徽章</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 导航 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tasks', this)">📋 任务</button>
+    <button class="tab-btn" onclick="switchTab('records', this)">📓 记录</button>
+    <button class="tab-btn" onclick="switchTab('badges', this)">🏅 成就</button>
+  </div>
+
+  <!-- ====== 任务面板 ====== -->
+  <div class="tab-panel active" id="panel-tasks">
+    <div class="section-title"><span class="emoji">⭐</span> 任务列表</div>
+    <ul class="task-list" id="taskList"></ul>
+  </div>
+
+  <!-- ====== 记录面板 ====== -->
+  <div class="tab-panel" id="panel-records">
+    <div class="section-title"><span class="emoji">📓</span> 存钱记录</div>
+    <div id="recordList"></div>
+  </div>
+
+  <!-- ====== 成就面板 ====== -->
+  <div class="tab-panel" id="panel-badges">
+    <div class="section-title"><span class="emoji">🏅</span> 成就徽章</div>
+    <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+
+</div>
+
+<!-- 浮动按钮 -->
+<div class="fab-container">
+  <button class="fab fab-record" onclick="openRecordModal()" title="记一笔存钱">💰</button>
+  <button class="fab fab-temp" onclick="openTempModal()" title="临时任务（直接入记录）">⚡</button>
+  <button class="fab fab-main" onclick="openTaskModal()" title="添加任务">＋</button>
+</div>
+
+<!-- 目标设置模态框 -->
+<div class="modal-overlay" id="goalModal">
+  <div class="modal-box">
+    <div class="emoji-big">🎯</div>
+    <h3>设置攒钱目标</h3>
+    <p>输入目标名称和金额</p>
+    <input type="text" id="goalNameInput" placeholder="目标名称（如：iPad Air）" maxlength="20">
+    <input type="number" id="goalAmountInput" placeholder="目标金额" min="1" max="999999">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('goalModal')">取消</button>
+      <button class="btn-primary" onclick="saveGoal()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加任务模态框 -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-box">
+    <div class="emoji-big">⭐</div>
+    <h3>添加任务</h3>
+    <p>选择类型，填写信息</p>
+    <div class="type-selector">
+      <div class="type-option active daily" id="typeDaily" onclick="selectTaskType('daily')">⭐ 每日任务</div>
+      <div class="type-option" id="typeCount" onclick="selectTaskType('count')">🔁 次数任务</div>
+    </div>
+    <input type="text" id="taskNameInput" placeholder="任务名称" maxlength="30">
+    <div class="input-row">
+      <input type="number" id="taskRewardInput" placeholder="奖励 ¥" min="0" max="999">
+    </div>
+    <div class="target-row" id="targetRow">
+      <input type="number" id="taskTargetInput" placeholder="目标次数（0=不限）" min="0" max="999">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('taskModal')">取消</button>
+      <button class="btn-primary" onclick="saveTask()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 临时任务模态框 -->
+<div class="modal-overlay" id="tempModal">
+  <div class="modal-box">
+    <div class="emoji-big">⚡</div>
+    <h3>临时任务</h3>
+    <p>一次性任务，直接记入存钱记录</p>
+    <input type="text" id="tempNameInput" placeholder="任务名称（如：帮爸爸洗车）" maxlength="30">
+    <div class="input-row">
+      <input type="number" id="tempAmountInput" placeholder="金额 ¥" min="0" max="9999">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('tempModal')">取消</button>
+      <button class="btn-primary" onclick="saveTempTask()">记一笔</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记一笔模态框 -->
+<div class="modal-overlay" id="recordModal">
+  <div class="modal-box">
+    <div class="emoji-big">💰</div>
+    <h3>记一笔</h3>
+    <p>手动添加存钱记录</p>
+    <input type="number" id="recordAmountInput" placeholder="金额 ¥" min="0" max="9999">
+    <input type="text" id="recordDescInput" placeholder="说明（如：零花钱/红包）" maxlength="40">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('recordModal')">取消</button>
+      <button class="btn-primary" onclick="saveRecord()">记一笔</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理员密码模态框 -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-box">
+    <div class="emoji-big">🔐</div>
+    <h3>管理员验证</h3>
+    <p>此操作需要管理员密码</p>
+    <input type="password" id="adminPasswordInput" placeholder="请输入密码" maxlength="20" style="text-align:center" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('adminModal')">取消</button>
+      <button class="btn-primary" onclick="checkAdminPassword()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 补记日期模态框 -->
+<div class="modal-overlay" id="dateModal">
+  <div class="modal-box">
+    <div class="emoji-big">📅</div>
+    <h3>补记日期</h3>
+    <p>选择要补记的日期，然后输入金额和说明</p>
+    <input type="date" id="backDateInput">
+    <input type="number" id="backAmountInput" placeholder="金额 ¥" min="0" max="9999" onkeydown="if(event.key==='Enter')document.getElementById('backDescInput').focus()">
+    <input type="text" id="backDescInput" placeholder="说明（如：做家务/零花钱）" maxlength="40" onkeydown="if(event.key==='Enter')saveBackRecord()">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('dateModal')">取消</button>
+      <button class="btn-primary" onclick="saveBackRecord()">补记</button>
+    </div>
+  </div>
+</div>
+
+<!-- 庆祝动画 -->
+<div class="celebrate" id="celebrate">🎉</div>
+
+<script>
+// ====== 数据管理（服务端 API）======
+const DB = {
+  async load() {
+    try {
+      const resp = await fetch('/piggy/api/data');
+      const saved = await resp.json();
+      const def = this.default();
+      // 迁移旧数据：合并 dailyTasks + countTasks -> tasks
+      let tasks = saved.tasks || [];
+      if (tasks.length === 0 && (saved.dailyTasks || saved.extraTasks || saved.countTasks)) {
+        const oldDaily = (saved.dailyTasks || []).map(t => ({ ...t, type: 'daily' }));
+        const oldExtra = (saved.extraTasks || []).map(t => ({ ...t, type: 'daily' }));
+        const oldCount = (saved.countTasks || []).map(t => ({ ...t, type: 'count' }));
+        tasks = [...oldDaily, ...oldExtra, ...oldCount];
+      }
+      return {
+        goal: saved.goal || def.goal,
+        records: saved.records || def.records,
+        tasks: tasks,
+        completedTasks: saved.completedTasks || def.completedTasks,
+        startDate: saved.startDate || def.startDate
+      };
+    } catch(e) {
+      console.error('Load failed:', e);
+      return this.default();
+    }
+  },
+  save() {
+    // fire-and-forget, 不阻塞 UI
+    fetch('/piggy/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    }).catch(e => console.error('Save failed:', e));
+  },
+  default() {
+    return {
+      goal: { name: '', amount: 0 },
+      records: [],
+      tasks: [],
+      completedTasks: [],
+      startDate: newStr().split('T')[0]
+    };
+  }
+};
+
+function newStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0') + 'T' +
+    String(d.getHours()).padStart(2,'0') + ':' +
+    String(d.getMinutes()).padStart(2,'0');
+}
+
+let state = DB.default();
+let currentTaskType = 'daily';
+
+// ====== 初始化 ======
+async function init() {
+  state = await DB.load();
+  if (state.tasks.length === 0) {
+    state.tasks = [
+      { id: genId(), name: '整理房间', reward: 2, type: 'daily' },
+      { id: genId(), name: '按时完成作业', reward: 3, type: 'daily' },
+      { id: genId(), name: '自己刷牙洗脸', reward: 1, type: 'daily' },
+      { id: genId(), name: '读书30分钟', reward: 2, type: 'daily' },
+      { id: genId(), name: '帮妈妈洗碗', reward: 2, type: 'count', target: 10 },
+      { id: genId(), name: '倒垃圾', reward: 1, type: 'count', target: 0 },
+    ];
+    DB.save();
+  }
+  if (!state.goal.name || state.goal.amount === 0) {
+    setTimeout(() => openGoalModal(), 300);
+  }
+  renderAll();
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ====== 渲染 ======
+function renderAll() {
+  renderGoal();
+  renderStats();
+  renderTasks();
+  renderRecords();
+  renderBadges();
+}
+
+function renderGoal() {
+  const g = state.goal;
+  const current = getTotalSaved();
+  document.getElementById('goalTitle').textContent = g.name ? g.name : '点击设置目标';
+  document.getElementById('currentAmount').textContent = '¥' + current.toFixed(0);
+  document.getElementById('targetAmount').textContent = '¥' + (g.amount || 0).toFixed(0);
+  const pct = g.amount > 0 ? Math.min(100, (current / g.amount * 100)) : 0;
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.textContent = pct.toFixed(0) + '%';
+  const subtitle = document.getElementById('bannerSubtitle');
+  if (g.amount > 0) {
+    const remain = Math.max(0, g.amount - current);
+    if (remain > 0) {
+      subtitle.textContent = '还差 ¥' + remain.toFixed(0) + ' 就能达成目标啦！加油 💪';
+    } else {
+      subtitle.textContent = '🎉 目标已达成！太棒了！';
+    }
+  } else {
+    subtitle.textContent = '点击 ✏️ 设置你的攒钱目标';
+  }
+}
+
+function getTotalSaved() {
+  return state.records.reduce((sum, r) => sum + r.amount, 0);
+}
+
+function renderStats() {
+  const days = state.records.length > 0
+    ? Math.max(1, Math.ceil((new Date() - new Date(state.startDate)) / 86400000))
+    : 0;
+  document.getElementById('statDays').textContent = days;
+  document.getElementById('statTasks').textContent = state.completedTasks.length;
+  const badges = getBadges();
+  document.getElementById('statBadges').textContent = badges.filter(b => b.unlocked).length;
+}
+
+function renderTasks() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = '';
+  if (state.tasks.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="emoji">📝</span>还没有任务，点右下角 ＋ 添加吧！</div>';
+    return;
+  }
+  // 每日任务在前，次数任务在后
+  const daily = state.tasks.filter(t => t.type !== 'count');
+  const count = state.tasks.filter(t => t.type === 'count');
+  [...daily, ...count].forEach(task => {
+    list.appendChild(createTaskEl(task));
+  });
+}
+
+function createTaskEl(task) {
+  const isCount = task.type === 'count';
+  const li = document.createElement('li');
+  li.className = 'task-item';
+
+  if (isCount) {
+    const completed = state.completedTasks.filter(c => c.taskId === task.id);
+    const count = completed.length;
+    const target = task.target || 0;
+    const isDone = target > 0 && count >= target;
+    const pct = target > 0 ? Math.min(100, count / target * 100) : 0;
+    const countText = target > 0 ? count + '/' + target + '次' : count + '次';
+    li.innerHTML = `
+      <div class="task-info">
+        <div class="task-name">${escapeHtml(task.name)}<span class="task-type-tag count">次数</span></div>
+        <div class="count-inline">
+          <div class="count-inline-bar"><div class="count-inline-fill" style="width:${pct}%"></div></div>
+          <span class="count-inline-text ${isDone ? 'done' : ''}">${countText}</span>
+          ${!isDone ? `<button class="count-btn" onclick="doCountTask('${task.id}')">+1</button>` : ''}
+          ${count > 0 ? `<button class="count-btn undo" onclick="undoCountTask('${task.id}')">撤销</button>` : ''}
+        </div>
+      </div>
+      <span class="task-reward">+¥${task.reward}/次</span>
+      <button class="task-delete" onclick="deleteTask('${task.id}')">×</button>
+    `;
+  } else {
+    const done = isTaskDoneToday(task.id);
+    li.className += done ? ' done' : '';
+    li.innerHTML = `
+      <div class="task-check ${done ? 'checked' : ''}" onclick="toggleTask('${task.id}')">
+        ${done ? '✓' : ''}
+      </div>
+      <div class="task-info">
+        <div class="task-name">${escapeHtml(task.name)}<span class="task-type-tag daily">每日</span></div>
+      </div>
+      <span class="task-reward">+¥${task.reward}</span>
+      <button class="task-delete" onclick="deleteTask('${task.id}')">×</button>
+    `;
+  }
+  return li;
+}
+
+function isTaskDoneToday(id) {
+  const today = todayStr();
+  return state.completedTasks.some(c => c.taskId === id && c.date === today);
+}
+
+function renderRecords() {
+  const list = document.getElementById('recordList');
+  list.innerHTML = '';
+  if (state.records.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="emoji">📔</span>还没有存钱记录，点右下角 💰 开始吧！</div>';
+    return;
+  }
+  const sorted = [...state.records].reverse();
+  sorted.forEach(r => {
+    const d = new Date(r.date);
+    const item = document.createElement('div');
+    item.className = 'record-item';
+    item.innerHTML = `
+      <div class="record-date">
+        <div class="day">${d.getDate()}</div>
+        <div class="month">${d.getMonth()+1}月</div>
+      </div>
+      <div class="record-info">
+        <div class="record-desc">${escapeHtml(r.desc || '存钱')}</div>
+      </div>
+      <div class="record-amount">+¥${r.amount}</div>
+      <button class="record-delete" onclick="deleteRecord('${r.id}')">×</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ====== 成就徽章 ======
+function getBadges() {
+  const total = getTotalSaved();
+  const taskCount = state.completedTasks.length;
+  const days = state.records.length;
+  return [
+    { icon: '🌱', name: '初出茅庐', desc: '存第一笔钱', unlocked: total > 0 },
+    { icon: '🎈', name: '小有积蓄', desc: '存满¥50', unlocked: total >= 50 },
+    { icon: '⭐', name: '努力存钱', desc: '存满¥100', unlocked: total >= 100 },
+    { icon: '🔥', name: '存钱达人', desc: '存满¥300', unlocked: total >= 300 },
+    { icon: '💪', name: '半程勇士', desc: '完成目标的50%', unlocked: state.goal.amount > 0 && total >= state.goal.amount * 0.5 },
+    { icon: '🏆', name: '目标达成', desc: '完成全部目标', unlocked: state.goal.amount > 0 && total >= state.goal.amount },
+    { icon: '📝', name: '任务新手', desc: '完成1个任务', unlocked: taskCount >= 1 },
+    { icon: '⚡', name: '任务能手', desc: '完成10个任务', unlocked: taskCount >= 10 },
+    { icon: '🏅', name: '任务大师', desc: '完成30个任务', unlocked: taskCount >= 30 },
+    { icon: '📅', name: '坚持一周', desc: '记录满7天', unlocked: days >= 7 },
+    { icon: '🗓️', name: '坚持一月', desc: '记录满30天', unlocked: days >= 30 },
+    { icon: '🎉', name: '攒钱明星', desc: '记录满50笔', unlocked: state.records.length >= 50 },
+  ];
+}
+
+function renderBadges() {
+  const grid = document.getElementById('badgesGrid');
+  grid.innerHTML = '';
+  const badges = getBadges();
+  badges.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'badge ' + (b.unlocked ? 'unlocked' : 'locked');
+    el.innerHTML = '<div class="badge-icon">' + b.icon + '</div><div class="badge-name">' + b.name + '</div><div class="badge-desc">' + b.desc + '</div>';
+    grid.appendChild(el);
+  });
+}
+
+// ====== 操作函数 ======
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ====== 任务模态框 ======
+function openTaskModal() {
+  currentTaskType = 'daily';
+  document.getElementById('typeDaily').classList.add('active', 'daily');
+  document.getElementById('typeCount').classList.remove('active');
+  document.getElementById('typeCount').classList.remove('daily');
+  document.getElementById('targetRow').classList.remove('show');
+  document.getElementById('taskNameInput').value = '';
+  document.getElementById('taskRewardInput').value = '';
+  document.getElementById('taskTargetInput').value = '';
+  document.getElementById('taskModal').classList.add('show');
+  setTimeout(() => document.getElementById('taskNameInput').focus(), 100);
+}
+
+function selectTaskType(type) {
+  currentTaskType = type;
+  const dailyBtn = document.getElementById('typeDaily');
+  const countBtn = document.getElementById('typeCount');
+  const targetRow = document.getElementById('targetRow');
+  if (type === 'daily') {
+    dailyBtn.classList.add('active', 'daily');
+    countBtn.classList.remove('active');
+    targetRow.classList.remove('show');
+  } else {
+    countBtn.classList.add('active');
+    dailyBtn.classList.remove('active', 'daily');
+    targetRow.classList.add('show');
+  }
+}
+
+function saveTask() {
+  const name = document.getElementById('taskNameInput').value.trim();
+  const reward = parseInt(document.getElementById('taskRewardInput').value) || 0;
+  if (!name) { alert('请输入任务名称'); return; }
+  if (reward < 0) { alert('奖励金额不能为负数'); return; }
+  const task = { id: genId(), name, reward, type: currentTaskType };
+  if (currentTaskType === 'count') {
+    task.target = parseInt(document.getElementById('taskTargetInput').value) || 0;
+  }
+  state.tasks.push(task);
+  DB.save();
+  closeModal('taskModal');
+  renderAll();
+}
+
+function deleteTask(id) {
+  if (!confirm('确定删除这个任务吗？')) return;
+  // 删除关联的完成记录和存钱记录
+  const completed = state.completedTasks.filter(c => c.taskId === id);
+  completed.forEach(c => {
+    if (c.recordId) {
+      state.records = state.records.filter(r => r.id !== c.recordId);
+    }
+  });
+  state.completedTasks = state.completedTasks.filter(c => c.taskId !== id);
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  DB.save();
+  renderAll();
+}
+
+function toggleTask(id) {
+  const today = todayStr();
+  const idx = state.completedTasks.findIndex(c => c.taskId === id && c.date === today);
+  if (idx >= 0) {
+    const completed = state.completedTasks[idx];
+    if (completed.recordId) {
+      state.records = state.records.filter(r => r.id !== completed.recordId);
+    }
+    state.completedTasks.splice(idx, 1);
+  } else {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    const recordId = genId();
+    state.completedTasks.push({ taskId: id, date: today, reward: task.reward, time: newStr(), recordId: recordId });
+    showCelebrate('🎉');
+    state.records.push({ id: recordId, date: newStr(), amount: task.reward, desc: '完成任务：' + task.name });
+  }
+  DB.save();
+  renderAll();
+  checkNewBadges();
+}
+
+function doCountTask(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (!task) return;
+  const count = state.completedTasks.filter(c => c.taskId === id).length;
+  if (task.target > 0 && count >= task.target) {
+    alert('这个任务已经完成全部目标次数啦！🎉');
+    return;
+  }
+  const today = todayStr();
+  const recordId = genId();
+  state.completedTasks.push({ taskId: id, date: today, reward: task.reward, time: newStr(), recordId: recordId });
+  state.records.push({ id: recordId, date: newStr(), amount: task.reward, desc: '完成任务：' + task.name });
+  showCelebrate('🔁');
+  DB.save();
+  renderAll();
+  checkNewBadges();
+}
+
+function undoCountTask(id) {
+  const completed = state.completedTasks.filter(c => c.taskId === id);
+  if (completed.length === 0) return;
+  const last = completed[completed.length - 1];
+  if (last.recordId) {
+    state.records = state.records.filter(r => r.id !== last.recordId);
+  }
+  const idx = state.completedTasks.findIndex(c => c === last);
+  if (idx >= 0) state.completedTasks.splice(idx, 1);
+  DB.save();
+  renderAll();
+}
+
+// ====== 临时任务 ======
+function openTempModal() {
+  document.getElementById('tempNameInput').value = '';
+  document.getElementById('tempAmountInput').value = '';
+  document.getElementById('tempModal').classList.add('show');
+  setTimeout(() => document.getElementById('tempNameInput').focus(), 100);
+}
+
+function saveTempTask() {
+  const name = document.getElementById('tempNameInput').value.trim();
+  const amount = parseInt(document.getElementById('tempAmountInput').value);
+  if (!name) { alert('请输入任务名称'); return; }
+  if (!amount || amount <= 0) { alert('请输入有效金额'); return; }
+  state.records.push({ id: genId(), date: newStr(), amount, desc: '临时任务：' + name });
+  DB.save();
+  closeModal('tempModal');
+  renderAll();
+  checkNewBadges();
+  showCelebrate('⚡');
+}
+
+// ====== 记一笔 ======
+function openRecordModal() {
+  document.getElementById('recordAmountInput').value = '';
+  document.getElementById('recordDescInput').value = '';
+  document.getElementById('recordModal').classList.add('show');
+  setTimeout(() => document.getElementById('recordAmountInput').focus(), 100);
+}
+
+function saveRecord() {
+  const amount = parseInt(document.getElementById('recordAmountInput').value);
+  const desc = document.getElementById('recordDescInput').value.trim();
+  if (!amount || amount <= 0) { alert('请输入有效金额'); return; }
+  state.records.push({ id: genId(), date: newStr(), amount, desc: desc || '存钱' });
+  DB.save();
+  closeModal('recordModal');
+  renderAll();
+  checkNewBadges();
+  showCelebrate('💰');
+}
+
+function deleteRecord(id) {
+  if (!confirm('确定删除这条记录吗？')) return;
+  state.records = state.records.filter(r => r.id !== id);
+  DB.save();
+  renderAll();
+}
+
+// ====== 目标设置 ======
+function openGoalModal() {
+  document.getElementById('goalNameInput').value = state.goal.name || '';
+  document.getElementById('goalAmountInput').value = state.goal.amount || '';
+  document.getElementById('goalModal').classList.add('show');
+  setTimeout(() => document.getElementById('goalNameInput').focus(), 100);
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function saveGoal() {
+  const name = document.getElementById('goalNameInput').value.trim();
+  const amount = parseInt(document.getElementById('goalAmountInput').value) || 0;
+  if (!name) { alert('请输入目标名称'); return; }
+  if (amount <= 0) { alert('请输入有效金额'); return; }
+  state.goal = { name, amount };
+  DB.save();
+  closeModal('goalModal');
+  renderAll();
+}
+
+// ====== 庆祝效果 ======
+function showCelebrate(emoji) {
+  const el = document.getElementById('celebrate');
+  el.textContent = emoji;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 800);
+}
+
+let prevBadgeCount = 0;
+function checkNewBadges() {
+  const badges = getBadges();
+  const newCount = badges.filter(b => b.unlocked).length;
+  if (newCount > prevBadgeCount) {
+    showCelebrate('🏅');
+  }
+  prevBadgeCount = newCount;
+}
+
+// ====== 工具 ======
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ====== 管理员密码验证 ======
+const ADMIN_PASSWORD = 'admin';
+var adminActionCallback = null;
+
+function verifyAdmin(callback) {
+  adminActionCallback = callback;
+  openModal('adminModal');
+  var input = document.getElementById('adminPasswordInput');
+  if (input) {
+    input.value = '';
+    setTimeout(function() { input.focus(); }, 50);
+  }
+}
+
+function checkAdminPassword() {
+  var input = document.getElementById('adminPasswordInput');
+  if (!input) return;
+  if (input.value === ADMIN_PASSWORD) {
+    closeModal('adminModal');
+    var cb = adminActionCallback;
+    adminActionCallback = null;
+    if (cb) cb();
+  } else {
+    alert('密码错误！');
+    input.value = '';
+    input.focus();
+  }
+}
+
+// ====== 清空/重置数据（需管理员密码）======
+function confirmClearData() {
+  verifyAdmin(function() {
+    clearAllData();
+  });
+}
+
+function confirmResetData() {
+  verifyAdmin(function() {
+    resetTestData();
+  });
+}
+
+function clearAllData() {
+  if (!confirm('确定要清空所有数据吗？\n（目标、任务、记录、成就全部删除，无法恢复）')) return;
+  state = DB.default();
+  DB.save();
+  renderAll();
+  setTimeout(() => openGoalModal(), 200);
+}
+
+function resetTestData() {
+  if (!confirm('确定要重置为初始测试数据吗？\n（当前数据会被清空，填入默认任务）')) return;
+  state = DB.default();
+  state.tasks = [
+    { id: genId(), name: '整理房间', reward: 2, type: 'daily' },
+    { id: genId(), name: '按时完成作业', reward: 3, type: 'daily' },
+    { id: genId(), name: '自己刷牙洗脸', reward: 1, type: 'daily' },
+    { id: genId(), name: '读书30分钟', reward: 2, type: 'daily' },
+    { id: genId(), name: '帮妈妈洗碗', reward: 2, type: 'count', target: 10 },
+    { id: genId(), name: '倒垃圾', reward: 1, type: 'count', target: 0 },
+  ];
+  DB.save();
+  renderAll();
+  alert('数据已重置为初始状态！');
+}
+
+// ====== 补记日期功能 ======
+function openDateModal() {
+  verifyAdmin(function() {
+    // 密码通过后打开补记模态框
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth()+1).padStart(2,'0');
+    var dd = String(today.getDate()).padStart(2,'0');
+    var dateStr = yyyy + '-' + mm + '-' + dd;
+    document.getElementById('backDateInput').value = dateStr;
+    document.getElementById('backAmountInput').value = '';
+    document.getElementById('backDescInput').value = '';
+    openModal('dateModal');
+    setTimeout(function() {
+      document.getElementById('backAmountInput').focus();
+    }, 50);
+  });
+}
+
+function saveBackRecord() {
+  var dateVal = document.getElementById('backDateInput').value;
+  var amount = parseFloat(document.getElementById('backAmountInput').value);
+  var desc = document.getElementById('backDescInput').value.trim() || '补记';
+
+  if (!dateVal) {
+    alert('请选择要补记的日期');
+    return;
+  }
+  if (isNaN(amount) || amount <= 0) {
+    alert('请输入有效金额');
+    return;
+  }
+
+  // 组合日期+当前时间，保持和 newStr 一致的格式 YYYY-MM-DDTHH:MM
+  var now = new Date();
+  var hh = String(now.getHours()).padStart(2,'0');
+  var mi = String(now.getMinutes()).padStart(2,'0');
+  var fullDate = dateVal + 'T' + hh + ':' + mi;
+
+  state.records.push({
+    id: genId(),
+    date: fullDate,
+    amount: amount,
+    desc: desc
+  });
+  DB.save();
+  renderAll();
+  closeModal('dateModal');
+  showCelebrate(amount, '补记成功！');
+}
+
+// 启动
+init();
+prevBadgeCount = getBadges().filter(b => b.unlocked).length;
+</script>
+</body>
+</html>
